@@ -269,4 +269,4 @@ coverage-html
 version.json
 Version.cs
 swagger.json
-appsettings.json
+HockeyPickup.Api/appsettings.json
