@@ -106,6 +106,9 @@ dotnet_diagnostic.CS8603.severity = suggestion
 dotnet_diagnostic.CS8765.severity = suggestion
 csharp_prefer_system_threading_lock = true:suggestion
 
+# ASP0014: Suggest using top level route registrations
+dotnet_diagnostic.ASP0014.severity = suggestion
+
 [*.{cs,vb}]
 #### Naming styles ####
 

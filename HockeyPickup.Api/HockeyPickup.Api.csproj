@@ -23,6 +23,8 @@
     <None Include="version.json" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="HotChocolate.AspNetCore" Version="14.1.0" />
+    <PackageReference Include="NSwag.AspNetCore" Version="14.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
   </ItemGroup>
   <Target Name="PreBuild" AfterTargets="PreBuildEvent">
