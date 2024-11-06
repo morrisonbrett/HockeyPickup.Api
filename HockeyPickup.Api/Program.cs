@@ -1,9 +1,6 @@
-using HotChocolate.Execution.Processing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Diagnostics.CodeAnalysis;
@@ -30,7 +27,7 @@ public class Program
                 Version = "1.0.0",
                 Title = "HockeyPickup.Api",
                 Description = "HockeyPickup APIs using strict OpenAPI specification.",
-                TermsOfService = new Uri("https://hockeypickup.com/terms"),
+                TermsOfService = new Uri("https://hockeypickup.com"),
                 Contact = new OpenApiContact()
                 {
                     Name = "HockeyPickup IT",
@@ -190,8 +187,4 @@ public class Program
             }
         }
     }
-}
-
-internal class AuthorizeCheckOperationFilter
-{
 }
