@@ -37,6 +37,30 @@ jobs:
           dotnet-version: '8.x'
           include-prerelease: true
 
+      - name: Restore
+        run: |
+          dotnet restore
+          dotnet tool restore
+
+        # This step is necessary because during the build step, the bash -c invoke of build-version.vbs fails.
+      - name: Run Build Version Script
+        run: bash -c ./scripts/build-version.sh
+        shell: bash
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        shell: pwsh
+        run: |
+          ./scripts/RunTests.ps1 -ci true
+
+      - name: Publish Coverage to Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: HockeyPickup.Api.Tests/TestResults/coverage.info
+
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
