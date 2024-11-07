@@ -1,7 +1,7 @@
-using HockeyPickup.Api.Data.Models;
+using HockeyPickup.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace HockeyPickup.Api.Data;
+namespace HockeyPickup.Api.Data.Context;
 
 public partial class HockeyPickupContext : DbContext
 {

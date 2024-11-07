@@ -1,4 +1,4 @@
-﻿namespace HockeyPickup.Api.Data.Models;
+﻿namespace HockeyPickup.Api.Data.Entities;
 
 public partial class AspNetUser
 {

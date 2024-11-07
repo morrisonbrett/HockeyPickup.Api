@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace HockeyPickup.Api.Data.Models;
+namespace HockeyPickup.Api.Data.Entities;
 
 public enum TeamAssignment
 {

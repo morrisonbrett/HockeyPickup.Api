@@ -1,4 +1,4 @@
-using HockeyPickup.Api.Data.Models;
+using HockeyPickup.Api.Data.Entities;
 
 public partial class AspNetRole
 {

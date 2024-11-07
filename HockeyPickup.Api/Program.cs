@@ -1,4 +1,7 @@
-using HockeyPickup.Api.Data;
+using HockeyPickup.Api.Data.Context;
+using HockeyPickup.Api.Data.Repositories;
+using HockeyPickup.Api.GraphQL;
+using HockeyPickup.Api.Models.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +18,12 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = null; // This keeps PascalCase
+            });
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
@@ -68,9 +77,12 @@ public class Program
 
         builder.Services.AddLogging();
         builder.Services.AddSingleton(typeof(ILogger), typeof(Logger<Program>));
+
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddGraphQLServer()
+            .AddGraphQLServer()
             .AddQueryType<Query>()
-            .AddType<UserType>();
+            .AddType<UserResponse>();
 
         builder.Services.AddHealthChecks()
             .AddCheck("Api", () => HealthCheckResult.Healthy("Api is healthy"))
