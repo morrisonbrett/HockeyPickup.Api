@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - HockeyPickupApi
+name: Build and Deploy
 
 on:
   push:
@@ -47,7 +47,7 @@ jobs:
         run: bash -c ./scripts/build-version.sh
         shell: bash
 
-      - name: Build
+      - name: Build Debug Version
         run: dotnet build --no-restore
 
       - name: Test
@@ -61,13 +61,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: HockeyPickup.Api.Tests/TestResults/coverage.info
 
-      - name: Build with dotnet
+      - name: Build Release Version
         run: dotnet build --configuration Release
 
-      - name: dotnet publish
+      - name: Publish
         run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
-      - name: Upload artifact for deployment job
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: .net-app

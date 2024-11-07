@@ -4,10 +4,12 @@ using HockeyPickup.Api.GraphQL;
 using HockeyPickup.Api.Models.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace HockeyPickup.Api;
@@ -125,7 +127,7 @@ public class Program
         {
             e.MapControllers();
             e.MapGraphQL();
-            e.MapHealthChecks("/health", new HealthCheckOptions
+            app.MapHealthChecks("/health", new HealthCheckOptions
             {
                 ResponseWriter = async (context, report) =>
                 {
@@ -138,9 +140,11 @@ public class Program
                             name = e.Key,
                             status = e.Value.Status.ToString(),
                             description = e.Value.Description,
-                            duration = e.Value.Duration.ToString()
+                            data = e.Value.Data,
+                            exception = e.Value.Exception?.Message,
+                            duration = e.Value.Duration
                         }),
-                        duration = report.TotalDuration
+                        totalDuration = report.TotalDuration
                     };
                     await context.Response.WriteAsJsonAsync(response);
                 }
@@ -162,29 +166,90 @@ public class Program
 public class DatabaseHealthCheck : IHealthCheck
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<DatabaseHealthCheck> _logger;
 
-    public DatabaseHealthCheck(IServiceScopeFactory scopeFactory)
+    public DatabaseHealthCheck(IServiceScopeFactory scopeFactory, ILogger<DatabaseHealthCheck> logger)
     {
         _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
-    public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context,
-        CancellationToken cancellationToken = default)
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<HockeyPickupContext>();
-            await dbContext.Database.CanConnectAsync(cancellationToken);
+            var connection = dbContext.Database.GetDbConnection();
 
-            _ = await dbContext.AspNetUsers.FirstOrDefaultAsync(cancellationToken);
+            _logger.LogInformation("Starting database health check. Initial connection state: {State}", connection.State);
 
-            return HealthCheckResult.Healthy("Database connection is healthy");
+            // Ensure the connection is closed before we start
+            if (connection.State == ConnectionState.Open)
+            {
+                await connection.CloseAsync();
+            }
+
+            try
+            {
+                // Explicitly open the connection
+                await connection.OpenAsync(cancellationToken);
+                _logger.LogInformation("Successfully opened database connection");
+
+                var connectionInfo = new
+                {
+                    DatabaseName = connection.Database,
+                    ServerVersion = connection is SqlConnection sqlConn ? sqlConn.ServerVersion : "Unknown",
+                    State = connection.State.ToString()
+                };
+
+                // Try the query with the open connection
+                _ = await dbContext.AspNetUsers
+                    .TagWith("HealthCheck")
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                _logger.LogInformation("Successfully executed test query");
+
+                return HealthCheckResult.Healthy("Database connection is healthy", new Dictionary<string, object>
+                {
+                    { "ConnectionInfo", connectionInfo },
+                    { "LastChecked", DateTime.UtcNow }
+                });
+            }
+            catch (Exception queryEx)
+            {
+                _logger.LogError(queryEx, "Health check query failed. Connection state: {State}", connection.State);
+                return HealthCheckResult.Unhealthy(
+                    "Database query failed",
+                    queryEx,
+                    new Dictionary<string, object>
+                    {
+                        { "ConnectionState", connection.State.ToString() },
+                        { "QueryError", queryEx.Message },
+                        { "LastChecked", DateTime.UtcNow }
+                    });
+            }
+            finally
+            {
+                // Always ensure the connection is closed
+                if (connection.State == ConnectionState.Open)
+                {
+                    await connection.CloseAsync();
+                    _logger.LogInformation("Closed database connection");
+                }
+            }
         }
         catch (Exception ex)
         {
-            return HealthCheckResult.Unhealthy("Database connection is unhealthy", ex);
+            _logger.LogError(ex, "Database health check failed");
+            return HealthCheckResult.Unhealthy(
+                "Database health check failed",
+                ex,
+                new Dictionary<string, object>
+                {
+                    { "Error", ex.Message },
+                    { "LastChecked", DateTime.UtcNow }
+                });
         }
     }
 }

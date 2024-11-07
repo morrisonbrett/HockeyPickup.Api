@@ -1,9 +1,9 @@
-[![Twitter](https://img.shields.io/twitter/follow/morrisonbrett?style=social)](https://twitter.com/morrisonbrett)
+[![Twitter](https://img.shields.io/twitter/follow/morrisonbrett?style=social)](https://x.com/morrisonbrett)
 
 [![HockeyPickup.Api](https://github.com/morrisonbrett/HockeyPickup.Api/actions/workflows/master_hockeypickupapi.yml/badge.svg)](https://github.com/morrisonbrett/HockeyPickup.Api/actions/workflows/master_hockeypickupapi.yml)
 [![Coverage Status](https://coveralls.io/repos/github/morrisonbrett/HockeyPickup.Api/badge.svg)](https://coveralls.io/github/morrisonbrett/HockeyPickup.Api)
 
-# HockeyPickup.Api
+# 🏒 HockeyPickup.Api
 
 ## 🌈 Overview
 
