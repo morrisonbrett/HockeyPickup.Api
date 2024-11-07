@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 namespace HockeyPickup.Api.Models.Responses;
 
 [GraphQLName("User")]
-public class UserResponse
+public class UserBasicResponse
 {
     [Required]
     [Description("Unique identifier for the user")]
@@ -57,15 +57,6 @@ public class UserResponse
     public string? LastName { get; set; }
 
     [Required]
-    [Description("User's rating")]
-    [Range(0, 5)]
-    [JsonPropertyName("Rating")]
-    [JsonProperty(nameof(Rating), Required = Required.Always)]
-    [GraphQLName("Rating")]
-    [GraphQLDescription("User's rating")]
-    public required decimal Rating { get; set; }
-
-    [Required]
     [Description("Indicates if the user has preferred status")]
     [JsonPropertyName("IsPreferred")]
     [JsonProperty(nameof(IsPreferred), Required = Required.Always)]
@@ -101,4 +92,16 @@ public class UserResponse
     [GraphQLName("NotificationPreference")]
     [GraphQLDescription("User's notification preferences")]
     public NotificationPreference NotificationPreference { get; set; }
+}
+
+public class UserDetailedResponse : UserBasicResponse
+{
+    [Required]
+    [Description("User's rating")]
+    [Range(0, 5)]
+    [JsonPropertyName("Rating")]
+    [JsonProperty(nameof(Rating), Required = Required.Always)]
+    [GraphQLName("Rating")]
+    [GraphQLDescription("User's rating")]
+    public required decimal Rating { get; set; }
 }

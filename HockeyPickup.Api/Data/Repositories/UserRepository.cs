@@ -15,11 +15,28 @@ public class UserRepository : IUserRepository
         _logger = logger;
     }
 
-    public async Task<IEnumerable<UserResponse>> GetActiveUsersAsync()
+    public async Task<IEnumerable<UserBasicResponse>> GetBasicUsersAsync()
     {
         return await _context.AspNetUsers
             .Where(u => u.Active)
-            .Select(u => new UserResponse
+            .Select(u => new UserBasicResponse
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email,
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                IsPreferred = u.Preferred,
+                IsPreferredPlus = u.PreferredPlus,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<UserDetailedResponse>> GetDetailedUsersAsync()
+    {
+        return await _context.AspNetUsers
+            .Where(u => u.Active)
+            .Select(u => new UserDetailedResponse
             {
                 Id = u.Id,
                 UserName = u.UserName,

@@ -78,11 +78,13 @@ public class Program
         builder.Services.AddLogging();
         builder.Services.AddSingleton(typeof(ILogger), typeof(Logger<Program>));
 
+        builder.Services.AddHttpContextAccessor();
+
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddGraphQLServer()
             .AddGraphQLServer()
             .AddQueryType<Query>()
-            .AddType<UserResponse>();
+            .AddType<UserResponseType>();
 
         builder.Services.AddHealthChecks()
             .AddCheck("Api", () => HealthCheckResult.Healthy("Api is healthy"))

@@ -18,14 +18,20 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<UserBasicResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<UserDetailedResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<object>>> GetUsers()
     {
         try
         {
-            var users = await _userRepository.GetActiveUsersAsync();
-            return Ok(users);
+            // Check if user is admin
+            if (User.IsInRole("Admin"))
+            {
+                return Ok(await _userRepository.GetDetailedUsersAsync());
+            }
+
+            return Ok(await _userRepository.GetBasicUsersAsync());
         }
         catch (Exception ex)
         {
