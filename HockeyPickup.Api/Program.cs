@@ -68,7 +68,10 @@ public class Program
 
         builder.Services.AddLogging();
         builder.Services.AddSingleton(typeof(ILogger), typeof(Logger<Program>));
-        builder.Services.AddGraphQLServer().AddQueryType<Query>();
+        builder.Services.AddGraphQLServer()
+            .AddQueryType<Query>()
+            .AddType<UserType>();
+
         builder.Services.AddHealthChecks()
             .AddCheck("Api", () => HealthCheckResult.Healthy("Api is healthy"))
             .AddCheck<DatabaseHealthCheck>("Database");
