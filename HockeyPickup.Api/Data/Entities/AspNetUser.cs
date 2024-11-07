@@ -16,7 +16,6 @@ public partial class AspNetUser
     public string UserName { get; set; } = null!;
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
-    public int PaymentPreference { get; set; }
     public int NotificationPreference { get; set; }
     public string PayPalEmail { get; set; } = null!;
     public bool Active { get; set; }

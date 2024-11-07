@@ -204,9 +204,7 @@ public class DatabaseHealthCheck : IHealthCheck
                 };
 
                 // Try the query with the open connection
-                _ = await dbContext.AspNetUsers
-                    .TagWith("HealthCheck")
-                    .FirstOrDefaultAsync(cancellationToken);
+                _ = await dbContext.AspNetUsers.TagWith("HealthCheck").FirstOrDefaultAsync(cancellationToken);
 
                 _logger.LogInformation("Successfully executed test query");
 
@@ -219,9 +217,7 @@ public class DatabaseHealthCheck : IHealthCheck
             catch (Exception queryEx)
             {
                 _logger.LogError(queryEx, "Health check query failed. Connection state: {State}", connection.State);
-                return HealthCheckResult.Unhealthy(
-                    "Database query failed",
-                    queryEx,
+                return HealthCheckResult.Unhealthy("Database query failed", queryEx,
                     new Dictionary<string, object>
                     {
                         { "ConnectionState", connection.State.ToString() },
@@ -242,8 +238,7 @@ public class DatabaseHealthCheck : IHealthCheck
         catch (Exception ex)
         {
             _logger.LogError(ex, "Database health check failed");
-            return HealthCheckResult.Unhealthy(
-                "Database health check failed",
+            return HealthCheckResult.Unhealthy("Database health check failed",
                 ex,
                 new Dictionary<string, object>
                 {
