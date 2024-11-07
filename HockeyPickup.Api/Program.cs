@@ -1,5 +1,7 @@
+using HockeyPickup.Api.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -7,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace HockeyPickup.Api;
 
+[ExcludeFromCodeCoverage]
 public class Program
 {
     public static void Main(string[] args)
@@ -51,6 +54,17 @@ public class Program
             });
             o.OperationFilter<AuthorizeCheckOperationFilter>();
         });
+
+        builder.Services.AddDbContext<HockeyPickupContext>(options =>
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlServerOptionsAction: sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorNumbersToAdd: null);
+                }));
 
         builder.Services.AddLogging();
         builder.Services.AddSingleton(typeof(ILogger), typeof(Logger<Program>));
@@ -125,66 +139,72 @@ public class Program
 
         app.Run();
     }
+}
 
-    [ExcludeFromCodeCoverage]
-    public class DatabaseHealthCheck : IHealthCheck
+[ExcludeFromCodeCoverage]
+public class DatabaseHealthCheck : IHealthCheck
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public DatabaseHealthCheck(IServiceScopeFactory scopeFactory)
     {
-        private readonly IServiceScopeFactory _scopeFactory;
-
-        public DatabaseHealthCheck(IServiceScopeFactory scopeFactory)
-        {
-            _scopeFactory = scopeFactory;
-        }
-
-        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                //using var scope = _scopeFactory.CreateScope();
-                //var dbContext = scope.ServiceProvider.GetRequiredService<ITrueVoteDbContext>();
-                //await dbContext.EnsureCreatedAsync();
-                return HealthCheckResult.Healthy("Database connection is healthy");
-            }
-            catch (Exception ex)
-            {
-                return HealthCheckResult.Unhealthy("Database connection is unhealthy", ex);
-            }
-        }
+        _scopeFactory = scopeFactory;
     }
 
-    [ExcludeFromCodeCoverage]
-    public class AuthorizeCheckOperationFilter : IOperationFilter
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
     {
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        try
         {
-            // Check if the endpoint (action) has the Authorize attribute
-            var hasAuthorizeAttribute = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
-                .OfType<AuthorizeAttribute>().Any() ||
-                context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any();
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<HockeyPickupContext>();
+            await dbContext.Database.CanConnectAsync(cancellationToken);
 
-            if (hasAuthorizeAttribute)
-            {
-                // If the endpoint has [Authorize] attribute, display the "Authorize" button
-                operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
+            _ = await dbContext.AspNetUsers.FirstOrDefaultAsync(cancellationToken);
 
-                operation.Security = new List<OpenApiSecurityRequirement>
-                {
-                    new OpenApiSecurityRequirement
-                    {
-                        {
-                            new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                }
-                            },
-                            new string[] {}
-                        }
-                    }
-                };
-            }
+            return HealthCheckResult.Healthy("Database connection is healthy");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("Database connection is unhealthy", ex);
         }
     }
 }
+
+[ExcludeFromCodeCoverage]
+public class AuthorizeCheckOperationFilter : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        // Check if the endpoint (action) has the Authorize attribute
+        var hasAuthorizeAttribute = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
+            .OfType<AuthorizeAttribute>().Any() ||
+            context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any();
+
+        if (hasAuthorizeAttribute)
+        {
+            // If the endpoint has [Authorize] attribute, display the "Authorize" button
+            operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
+
+            operation.Security = new List<OpenApiSecurityRequirement>
+            {
+                new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                }
+            };
+        }
+    }
+}
+

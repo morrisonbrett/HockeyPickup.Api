@@ -44,7 +44,7 @@ csharp_style_prefer_not_pattern=true:error
 csharp_style_var_for_built_in_types=true:error
 csharp_style_var_when_type_is_apparent=true:error
 csharp_style_var_elsewhere=true:error
-csharp_style_expression_bodied_methods= false:error
+csharp_style_expression_bodied_methods= false:none
 csharp_style_expression_bodied_constructors= false:error
 
 # IDE0058: Expression value is never used
@@ -108,6 +108,9 @@ csharp_prefer_system_threading_lock = true:suggestion
 
 # ASP0014: Suggest using top level route registrations
 dotnet_diagnostic.ASP0014.severity = suggestion
+
+# IDE0022: Use block body for method
+dotnet_diagnostic.IDE0022.severity = none
 
 [*.{cs,vb}]
 #### Naming styles ####
