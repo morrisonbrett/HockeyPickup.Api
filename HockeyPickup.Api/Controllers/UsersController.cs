@@ -1,10 +1,12 @@
 ﻿using HockeyPickup.Api.Data.Repositories;
 using HockeyPickup.Api.Models.Responses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HockeyPickup.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("[controller]")]
 public class UsersController : ControllerBase
 {

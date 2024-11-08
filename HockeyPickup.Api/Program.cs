@@ -1,16 +1,19 @@
 using HockeyPickup.Api.Data.Context;
 using HockeyPickup.Api.Data.Repositories;
 using HockeyPickup.Api.GraphQL;
-using HockeyPickup.Api.Models.Responses;
+using HockeyPickup.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace HockeyPickup.Api;
 
@@ -92,6 +95,24 @@ public class Program
             .AddCheck("Api", () => HealthCheckResult.Healthy("Api is healthy"))
             .AddCheck<DatabaseHealthCheck>("Database");
 
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSecretKey"]!)),
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["JwtIssuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["JwtAudience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+        builder.Services.AddScoped<IJwtService, JwtService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+
         var app = builder.Build();
 
         app.UseHttpsRedirection();
@@ -122,6 +143,7 @@ public class Program
         app.UseWebSockets();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseTokenRenewal();
 
         app.UseEndpoints(e =>
         {
